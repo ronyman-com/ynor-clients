@@ -1,0 +1,184 @@
+<!-- templates/layouts/inc/partials/theme.ejs -->
+<div class="settings-section">
+  <h4>Appearance</h4>
+  
+  <!-- Theme Selection -->
+  <div class="settings-item">
+    <label>Theme</label>
+    <select id="themeSelect" class="settings-select">
+      <% const themes = typeof availableThemes !== 'undefined' && Array.isArray(availableThemes) ? availableThemes : [
+        { id: 'default', name: 'Default', mode: 'light', compact: false },
+        { id: 'dark', name: 'Dark', mode: 'dark', compact: false },
+        { id: 'light', name: 'Light', mode: 'light', compact: false }
+      ]; %>
+      
+      <% const current = typeof currentTheme !== 'undefined' ? currentTheme : { id: 'default', mode: 'light', compact: false }; %>
+      
+      <% themes.forEach(theme => { %>
+        <option value="<%= theme.id %>" 
+                data-theme-mode="<%= theme.mode || 'light' %>"
+                data-theme-compact="<%= theme.compact || false %>"
+                <%= current.id === theme.id ? 'selected' : '' %>>
+          <%= theme.name %>
+        </option>
+      <% }); %>
+    </select>
+  </div>
+
+  <!-- Dark Mode Toggle -->
+  <div class="settings-item toggle-item">
+    <span>Dark Mode</span>
+    <label class="switch">
+      <input type="checkbox" id="darkModeToggle" 
+             <%= (current.mode === 'dark' || current.darkMode === true) ? 'checked' : '' %>>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <!-- Compact Mode Toggle -->
+  <div class="settings-item toggle-item">
+    <span>Compact View</span>
+    <label class="switch">
+      <input type="checkbox" id="compactModeToggle"
+             <%= current.compact === true ? 'checked' : '' %>>
+      <span class="slider"></span>
+    </label>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Get theme control elements
+  const themeSelect = document.getElementById('themeSelect');
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  const compactModeToggle = document.getElementById('compactModeToggle');
+  const themeStyleElement = document.getElementById('themeStyles');
+  
+  // Function to update UI from current theme state
+  function updateUIFromCurrentTheme() {
+    if (!themeSelect || !darkModeToggle || !compactModeToggle) return;
+    
+    const currentMode = document.documentElement.getAttribute('data-theme') || 'light';
+    const isCompact = document.documentElement.classList.contains('compact-mode');
+    
+    // Update toggles
+    darkModeToggle.checked = currentMode === 'dark';
+    compactModeToggle.checked = isCompact;
+    
+    // Update select dropdown
+    if (themeSelect) {
+      themeSelect.selectedIndex = -1; // Reset first
+      
+      for (let option of themeSelect.options) {
+        const optionMode = option.getAttribute('data-theme-mode') || 'light';
+        const optionCompact = option.getAttribute('data-theme-compact') === 'true';
+        
+        if (optionMode === currentMode && optionCompact === isCompact) {
+          option.selected = true;
+          break;
+        }
+      }
+    }
+  }
+
+  // Function to handle theme changes across the app
+  function handleThemeChange(themeData) {
+    // Update HTML attributes
+    document.documentElement.setAttribute('data-theme', themeData.mode);
+    document.documentElement.classList.toggle('compact-mode', themeData.compact);
+    
+    // Update theme styles
+    if (themeStyleElement && themeData.css) {
+      themeStyleElement.textContent = themeData.css;
+    }
+    
+    // Dispatch event to other components
+    document.dispatchEvent(new CustomEvent('themeChanged', {
+      detail: themeData
+    }));
+  }
+
+  // Main theme update function
+  async function updateTheme() {
+    if (!themeSelect || !darkModeToggle || !compactModeToggle) return;
+    
+    const themeData = {
+      id: themeSelect.value,
+      mode: darkModeToggle.checked ? 'dark' : 'light',
+      compact: compactModeToggle.checked
+    };
+
+    try {
+      const response = await fetch('/api/theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(themeData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        handleThemeChange({
+          ...themeData,
+          css: result.css
+        });
+        showThemeFeedback('Theme updated successfully!', 'success');
+      } else {
+        throw new Error('Server responded with error');
+      }
+    } catch (error) {
+      console.error('Theme update failed:', error);
+      showThemeFeedback('Failed to update theme', 'error');
+      updateUIFromCurrentTheme(); // Revert to current state
+    }
+  }
+  
+  // Show feedback message
+  function showThemeFeedback(message, type) {
+    const feedback = document.createElement('div');
+    feedback.className = `theme-feedback ${type}`;
+    feedback.textContent = message;
+    document.body.appendChild(feedback);
+    
+    setTimeout(() => {
+      feedback.classList.add('fade-out');
+      setTimeout(() => feedback.remove(), 500);
+    }, 3000);
+  }
+
+  // Initialize theme controls
+  updateUIFromCurrentTheme();
+  
+  // Add event listeners
+  if (themeSelect) themeSelect.addEventListener('change', updateTheme);
+  if (darkModeToggle) darkModeToggle.addEventListener('change', updateTheme);
+  if (compactModeToggle) compactModeToggle.addEventListener('change', updateTheme);
+  
+  // Add CSS for feedback messages
+  const feedbackStyles = document.createElement('style');
+  feedbackStyles.textContent = `
+    .theme-feedback {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 20px;
+      border-radius: 4px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+    .theme-feedback.success {
+      background-color: #28a745;
+    }
+    .theme-feedback.error {
+      background-color: #dc3545;
+    }
+    .theme-feedback.fade-out {
+      opacity: 0;
+    }
+  `;
+  document.head.appendChild(feedbackStyles);
+});
+</script>

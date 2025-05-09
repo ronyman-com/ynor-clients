@@ -1,0 +1,56 @@
+.logout-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f9f9fb;
+    padding: 20px;
+  }
+  
+  .logout-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    text-align: center;
+  }
+  
+  .logout-header {
+    margin-bottom: 30px;
+  }
+  
+  .logout-logo {
+    height: 48px;
+    margin-bottom: 20px;
+  }
+  
+  .logout-progress {
+    margin: 30px 0;
+  }
+  
+  .progress-bar {
+    height: 4px;
+    background-color: #0060df;
+    width: 100%;
+    border-radius: 2px;
+    animation: progress 2s ease-in-out forwards;
+  }
+  
+  @keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+  }
+  
+  .return-link {
+    color: #0060df;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  @media (max-width: 480px) {
+    .logout-card {
+      padding: 30px 20px;
+    }
+  }

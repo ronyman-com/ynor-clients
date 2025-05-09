@@ -1,0 +1,114 @@
+<!-- templates/partials/search_component.ejs -->
+<div class="search-component">
+    <!-- Unified Search/Address Bar -->
+    <form id="search-form" class="omnibox-container">
+      <div class="omnibox-wrapper">
+        <input type="text" id="omnibox" placeholder="Search or enter address" autocomplete="off">
+        <div id="suggestions-container" class="suggestions-dropdown"></div>
+      </div>
+      <button type="submit">Search</button>
+    </form>
+  
+    <!-- Search Operators Panel (optional - you might want to hide this on home) -->
+    <div class="operators-panel home-operators" style="display: none;">
+      <% Object.entries(operators).forEach(([key, op]) => { %>
+        <div class="operator-item" data-operator="<%= key %>">
+          <span class="operator-icon"><%= op.icon %></span>
+          <span class="operator-key"><%= key %>:</span>
+          <span class="operator-desc"><%= op.description %></span>
+        </div>
+      <% }); %>
+    </div>
+  </div>
+  
+  <style>
+    .search-component {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .omnibox-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .omnibox-wrapper {
+      position: relative;
+      flex-grow: 1;
+    }
+    
+    #omnibox {
+      width: 100%;
+      padding: 12px 20px;
+      border-radius: 24px;
+      border: 1px solid var(--border-color);
+      font-size: 16px;
+    }
+    
+    .suggestions-dropdown {
+      display: none;
+      position: absolute;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0 0 8px 8px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      z-index: 1000;
+    }
+  </style>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const omnibox = document.getElementById('omnibox');
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    
+    omnibox.addEventListener('input', function() {
+      if (this.value.length > 0) {
+        // Show suggestions
+        suggestionsContainer.style.display = 'block';
+        
+        // Here you would typically fetch suggestions from an API
+        // For now we'll just show some dummy results
+        suggestionsContainer.innerHTML = `
+          <div class="suggestion">Search for "${this.value}"</div>
+          <div class="suggestion">${this.value} in Wikipedia</div>
+          <div class="suggestion">Images of ${this.value}</div>
+        `;
+      } else {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+    
+    // Handle form submission
+    document.getElementById('search-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const query = omnibox.value.trim();
+      if (query) {
+        // Determine if this is a URL or search term
+        if (isValidUrl(query)) {
+          window.location.href = addHttpIfNeeded(query);
+        } else {
+          window.location.href = `/search?q=${encodeURIComponent(query)}`;
+        }
+      }
+    });
+    
+    function isValidUrl(string) {
+      try {
+        new URL(string);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+    
+    function addHttpIfNeeded(url) {
+      if (!/^https?:\/\//i.test(url)) {
+        return 'http://' + url;
+      }
+      return url;
+    }
+  });
+  </script>

@@ -1,0 +1,13 @@
+{
+    "homePage": "https://start.ynor.org",
+    "startupBehavior": "home",
+    "theme": "system",
+    "fontSize": "16px",
+    "privacy": {
+      "trackingProtection": true
+    },
+    "bookmarks": {
+      "visible": true,
+      "maxItems": 10
+    }
+  }

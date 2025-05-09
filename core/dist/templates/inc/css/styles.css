@@ -1,0 +1,178 @@
+/* Base Styles */
+:root {
+    --primary: #0060df;
+    --primary-hover: #0250bb;
+    --secondary: #f0f0f4;
+    --text-primary: #15141a;
+    --text-secondary: #5b5b66;
+    --background: #ffffff;
+    --card-background: #f9f9fb;
+    --border: #e0e0e6;
+    --error: #d70022;
+    --success: #008000;
+  }
+  
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-primary);
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+    line-height: 1.5;
+  }
+  
+  /* Navigation */
+  .m24-navigation-refresh {
+    background-color: #fff;
+    box-shadow: 0 1px 4px rgba(12, 12, 13, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .m24-c-navigation-container {
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  
+  .m24-c-navigation-logo-link {
+    margin-right: 32px;
+  }
+  
+  .m24-c-navigation-menu-button {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-right: 16px;
+  }
+  
+  /* Content Layout */
+  .mzp-l-content {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  
+  .mzp-c-split {
+    display: flex;
+    flex-direction: column;
+    margin: 40px 0;
+  }
+  
+  .mzp-c-split-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mzp-c-split-media img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .mzp-c-split-body {
+    padding: 20px;
+  }
+  
+  /* Buttons */
+  .mzp-c-button {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .mzp-c-button.mzp-t-product {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+  }
+  
+  .mzp-c-button.mzp-t-product:hover {
+    background-color: var(--primary-hover);
+  }
+  
+  /* Cards */
+  .shortcut-card {
+    background: var(--card-background);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .shortcut-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .shortcut-icon {
+    width: 24px;
+    height: 24px;
+    margin-right: 8px;
+  }
+  
+  /* Forms */
+  .mzp-c-form {
+    max-width: 400px;
+    margin: 0 auto;
+  }
+  
+  .mzp-c-field {
+    margin-bottom: 16px;
+  }
+  
+  .mzp-c-field-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  /* Responsive */
+  @media (min-width: 768px) {
+    .mzp-c-split {
+      flex-direction: row;
+    }
+    
+    .mzp-c-split-container {
+      flex-direction: row;
+    }
+    
+    .mzp-c-split-media {
+      flex: 1;
+    }
+    
+    .mzp-c-split-body {
+      flex: 1;
+      padding: 0 40px;
+    }
+  }
+  
+  @media (max-width: 767px) {
+    .m24-c-navigation-menu-button {
+      display: block;
+    }
+    
+    .m24-c-navigation-items {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .m24-c-navigation-items.is-open {
+      display: block;
+    }
+  }

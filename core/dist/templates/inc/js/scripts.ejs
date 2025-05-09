@@ -1,0 +1,103 @@
+<%# Main scripts include file %>
+<script>
+// DOM Ready Handler
+(function() {
+  // Initialize YNOR Browser instance
+  class YNORBrowser {
+    constructor() {
+      this.initNavigation();
+      this.initPlatformTabs();
+      this.initModals();
+      this.initForms();
+      this.initSearch();
+      this.checkFirstRun();
+    }
+
+    initNavigation() {
+      const navToggle = document.querySelector('.m24-c-navigation-menu-button');
+      const navMenu = document.querySelector('.m24-c-navigation-items');
+      if (navToggle && navMenu) {
+        navToggle.addEventListener('click', () => navMenu.classList.toggle('is-open'));
+      }
+    }
+
+    initPlatformTabs() {
+      const platformTabs = document.querySelectorAll('.platform-tab');
+      platformTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          const platform = tab.dataset.platform;
+          platformTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.querySelectorAll('.platform-content').forEach(content => {
+            content.classList.toggle('active', content.dataset.platform === platform);
+          });
+        });
+      });
+    }
+
+    initModals() {
+      const modal = document.getElementById('create-shortcut-modal');
+      if (!modal) return;
+
+      const openModal = () => {
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+      };
+
+      const closeModal = () => {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+      };
+
+      document.querySelectorAll('[data-modal-target="create-shortcut"]').forEach(btn => {
+        btn.addEventListener('click', openModal);
+      });
+
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', closeModal);
+      });
+
+      modal.addEventListener('click', (e) => e.target === modal && closeModal());
+    }
+
+    initForms() {
+      const form = document.getElementById('shortcut-form');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const formData = new FormData(form);
+          console.log('Form data:', Object.fromEntries(formData));
+          form.reset();
+          this.closeModal();
+        });
+      }
+    }
+
+    initSearch() {
+      const searchInput = document.getElementById('shortcut-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const term = e.target.value.toLowerCase();
+          document.querySelectorAll('.shortcut-card').forEach(card => {
+            const name = card.querySelector('h3')?.textContent.toLowerCase() || '';
+            const url = card.querySelector('.shortcut-url')?.textContent.toLowerCase() || '';
+            card.style.display = (name.includes(term) || url.includes(term)) ? 'block' : 'none';
+          });
+        });
+      }
+    }
+
+    checkFirstRun() {
+      if (!localStorage.getItem('ynorFirstRun')) {
+        localStorage.setItem('ynorFirstRun', 'true');
+        // Additional first-run logic here
+      }
+    }
+  }
+
+  // Initialize when DOM is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    window.ynorBrowser = new YNORBrowser();
+  });
+})();
+</script>

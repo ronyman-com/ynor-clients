@@ -1,0 +1,8 @@
+<!-- templates/layouts/inc/partials/language-scripts.ejs -->
+<script>
+    window.languageConfig = {
+      current: '<%= typeof currentLanguage !== 'undefined' ? currentLanguage : 'en' %>',
+      available: <%= typeof availableLanguages !== 'undefined' ? JSON.stringify(availableLanguages) : '["en"]' %>,
+      translations: {}
+    };
+  </script>

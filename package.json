@@ -1,0 +1,71 @@
+{
+  "name": "ynor",
+  "version": "1.0.0",
+  "description": "Ynor browser client solutions - A modern web client framework",
+  "main": "server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node core/dist/server.js",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "test": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "build": "ynor build",
+    "preview": "vite preview",
+    "ynor": "ynor init ."
+  },
+  "bin": "cli/ynor.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ronyman-com/ynor-browser.git"
+  },
+  "keywords": [
+    "ynor",
+    "browser",
+    "client",
+    "framework",
+    "web",
+    "ronyman",
+    "javascript"
+  ],
+  "author": "Rony MAN <ronyman.com@outlook.com> (https://ronyman.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ronyman-com/ynor-browser/issues"
+  },
+  "homepage": "https://github.com/ronyman-com/ynor-browser#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "helmet": "^7.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "vitest": "^1.0.4",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "lint-staged": "^15.2.0",
+    "vite": "^5.0.0",
+    "acorn": "^8.11.0",
+    "estree-walker": "^3.0.3",
+    "express": "^4.18.2",
+    "chokidar": "^3.5.3",
+    "lodash.debounce": "^4.0.8",
+    "livereload": "^0.9.3",
+    "connect-livereload": "^0.6.1",
+    "http-proxy-middleware": "^2.0.6",
+    "concurrently": "^8.2.1"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,ts,tsx,json,md}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
+}
+
