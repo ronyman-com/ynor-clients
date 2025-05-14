@@ -4,22 +4,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
 
-// Get the current module path
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-// Create require function for ES modules
 const require = createRequire(import.meta.url);
 
-// Import all command modules
+// Command imports
 import { buildCommand } from './commands/build.js';
 import { checkCommand } from './commands/check.js';
 import { initCommand } from './commands/init.js';
 import { startCommand } from './commands/start.js';
 
-// Import server
-import { startServer } from '../server.js';
-
-// CLI configuration
 const commands = {
   init: {
     description: 'Initialize a new Ynor project',
@@ -39,7 +32,6 @@ const commands = {
   }
 };
 
-// Main CLI function
 async function runCLI() {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -50,22 +42,29 @@ async function runCLI() {
   }
 
   try {
-    // Execute the command
     const result = await commands[command].execute(args.slice(1));
     
-    // If the command returns server config, start the server
-    if (result?.serverConfig) {
-      await startServer(result.serverConfig);
+    if (command === 'start' && result?.server) {
+      console.log('\nServer running:');
+      console.log(`- Local:   ${result.urls?.local || 'http://localhost:' + result.server.address().port}`);
+      
+      if (result.urls?.network) {
+        console.log(`- Network: ${result.urls.network}`);
+      }
+      
+      console.log('\nPress Ctrl+C to stop');
+      
+      // Keep process alive
+      await new Promise(() => {});
     }
     
     process.exit(0);
   } catch (error) {
-    console.error(`Error executing command "${command}":`, error);
+    console.error(`Error: ${error.message}`);
     process.exit(1);
   }
 }
 
-// Show help information
 function showHelp() {
   console.log('Ynor CLI - Browser Solutions\n');
   console.log('Usage: ynor <command> [options]\n');
@@ -78,5 +77,23 @@ function showHelp() {
   console.log('\nFor specific command help: ynor <command> --help');
 }
 
-// Run the CLI
+function logServerInfo(server, urls) {
+  console.log('\nServer running:');
+  console.log(`- Local:   ${urls.local}`);
+  if (urls.network) {
+    console.log(`- Network: ${urls.network}`);
+  }
+  console.log('\nPress Ctrl+C to stop');
+}
+
+function setupGracefulShutdown(server) {
+  process.on('SIGINT', () => {
+    console.log('\nShutting down server...');
+    server.close(() => {
+      console.log('Server stopped');
+      process.exit(0);
+    });
+  });
+}
+
 runCLI().catch(console.error);

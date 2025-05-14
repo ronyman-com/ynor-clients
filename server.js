@@ -1,118 +1,93 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import chokidar from 'chokidar';
 import livereload from 'livereload';
 import connectLivereload from 'connect-livereload';
 import fs from 'fs';
+import os from 'os';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export async function startServer(config = {}) {
     const app = express();
     const port = config.port || 3000;
 
-    // Development features setup
-    if (config.mode === 'development') {
-        setupDevelopmentFeatures(app, config);
-    }
-
-    // Static assets serving
+    // 1. First setup static assets
     setupStaticAssets(app, config);
 
-    // API routes
-    setupRoutes(app, config);
+    // 2. Then setup API routes
+    setupRoutes(app);
 
-    // Serve the main index.html from dist
+    // 3. Finally setup the main SPA route
     setupMainRoute(app, config);
 
-    const server = app.listen(port, () => {
-        console.log(`
-Server running in ${config.mode} mode
-- Local:    http://localhost:${port}
-- Static:   ${config.staticDirs?.join('\n           ') || 'None'}
-- Watching: ${config.watch ? config.watch.join('\n           ') : 'No'}
-        `);
-    });
-
-    return server;
-}
-
-function setupDevelopmentFeatures(app, config) {
-    if (config.liveReload) {
-        const lrServer = livereload.createServer({
-            exts: ['js', 'css', 'html'],
-            debug: true
+    return new Promise((resolve, reject) => {
+        const server = app.listen(port, () => {
+            console.log(`\nServer running:\n- Local:   http://localhost:${port}`);
+            
+            const networkUrl = getNetworkUrl(port);
+            if (networkUrl) {
+                console.log(`- Network: ${networkUrl}`);
+            }
+            
+            resolve(server);
         });
-        
-        config.staticDirs?.forEach(dir => {
-            if (fs.existsSync(dir)) {
-                lrServer.watch(dir);
+
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                reject(new Error(`Port ${port} is already in use`));
+            } else {
+                reject(err);
             }
         });
-        app.use(connectLivereload());
-    }
-
-    if (config.watch) {
-        const watcher = chokidar.watch(config.watch.filter(dir => fs.existsSync(dir)), {
-            ignored: /node_modules/,
-            awaitWriteFinish: true
-        });
-        
-        watcher.on('change', path => {
-            console.log(`[HMR] File changed: ${path}`);
-        });
-    }
+    });
 }
 
 function setupStaticAssets(app, config) {
+    // Serve static files from all specified directories
     (config.staticDirs || []).forEach(dir => {
         if (fs.existsSync(dir)) {
-            app.use(express.static(dir));
-        } else {
-            console.warn(`Static directory not found: ${dir}`);
+            app.use(express.static(dir, { index: false })); // Important: disable automatic index.html serving
         }
     });
 }
 
-function setupRoutes(app, config) {
-    // Default routes
-    const defaultRoutes = [
-        {
-            method: 'get',
-            path: '/health',
-            handler: (_, res) => res.json({ status: 'healthy' })
-        },
-        {
-            method: 'get',
-            path: '/config',
-            handler: (_, res) => res.json({
-                mode: config.mode,
-                timestamp: new Date().toISOString()
-            })
-        }
-    ];
-
-    (config.routes || defaultRoutes).forEach(route => {
-        app[route.method](route.path, route.handler);
-    });
+function setupRoutes(app) {
+    // API routes
+    app.get('/health', (_, res) => res.json({ status: 'healthy' }));
+    app.get('/config', (_, res) => res.json({ status: 'ok' }));
 }
 
 function setupMainRoute(app, config) {
-    // Primary dist directory
-    const distDir = config.distDir || path.join(process.cwd(), 'dist');
-    const indexPath = path.join(distDir, 'index.html');
-
-    // Serve index.html for all routes
+    // Main SPA route handler
     app.get('*', (req, res) => {
+        const indexPath = path.join(config.distDir, 'index.html');
+        
         if (fs.existsSync(indexPath)) {
             res.sendFile(indexPath);
         } else {
             res.status(500).send(`
-                <h1>Error: Could not find index.html</h1>
-                <p>Expected to find it at: ${indexPath}</p>
+                <h1>Application Error</h1>
+                <p>Could not find index.html at: ${indexPath}</p>
                 <p>Please run the build command first.</p>
             `);
         }
     });
+}
+
+// Helper function to get network URL
+function getNetworkUrl(port) {
+    try {
+        const interfaces = os.networkInterfaces();
+        for (const name in interfaces) {
+            for (const net of interfaces[name]) {
+                const isIPv4 = net.family === 'IPv4' || net.family === 4;
+                if (isIPv4 && !net.internal) {
+                    return `http://${net.address}:${port}`;
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Network detection error:', e);
+    }
+    return null;
 }
