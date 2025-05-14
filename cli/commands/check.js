@@ -9,13 +9,14 @@ import { walk } from 'estree-walker';
  * @returns {Promise<Object>} Dependency report
  */
 export async function checkDependencies(filePath) {
-    const checkedFiles = new Set();
-    const imports = [];
+    const dependencyGraph = new Map();
     const errors = [];
     
     async function analyzeFile(currentPath) {
-        if (checkedFiles.has(currentPath)) return;
-        checkedFiles.add(currentPath);
+        if (dependencyGraph.has(currentPath)) return;
+        
+        const imports = [];
+        dependencyGraph.set(currentPath, imports);
         
         try {
             const content = await fs.readFile(currentPath, 'utf-8');
@@ -24,24 +25,22 @@ export async function checkDependencies(filePath) {
                 ecmaVersion: 'latest'
             });
             
-            walk(ast, {
-                enter(node) {
-                    if (node.type === 'ImportDeclaration') {
-                        const importPath = node.source.value;
-                        try {
-                            const resolvedPath = resolveImportPath(currentPath, importPath);
-                            imports.push(resolvedPath);
-                            analyzeFile(resolvedPath);
-                        } catch (err) {
-                            errors.push({
-                                file: currentPath,
-                                import: importPath,
-                                error: err.message
-                            });
-                        }
+            for (const node of ast.body) {
+                if (node.type === 'ImportDeclaration') {
+                    const importPath = node.source.value;
+                    try {
+                        const resolvedPath = await resolveImportPath(currentPath, importPath);
+                        imports.push(resolvedPath);
+                        await analyzeFile(resolvedPath);
+                    } catch (err) {
+                        errors.push({
+                            file: currentPath,
+                            import: importPath,
+                            error: err.message
+                        });
                     }
                 }
-            });
+            }
         } catch (error) {
             errors.push({
                 file: currentPath,
@@ -54,34 +53,42 @@ export async function checkDependencies(filePath) {
     
     return {
         entry: filePath,
-        imports: Array.from(new Set(imports)),
-        checkedFiles: Array.from(checkedFiles),
+        imports: Array.from(dependencyGraph.keys()).filter(k => k !== path.resolve(filePath)),
+        dependencyGraph: Object.fromEntries(dependencyGraph),
         errors,
         valid: errors.length === 0,
         generatedAt: new Date().toISOString()
     };
 }
 
-function resolveImportPath(baseFile, importPath) {
+// Change resolveImportPath to be async
+async function resolveImportPath(baseFile, importPath) {
     // Handle relative paths
     if (importPath.startsWith('./') || importPath.startsWith('../')) {
         const fullPath = path.resolve(path.dirname(baseFile), importPath);
         
         // Check for exact match
-        if (fs.existsSync(fullPath)) return fullPath;
-        
-        // Try with .js extension
-        if (fs.existsSync(`${fullPath}.js`)) return `${fullPath}.js`;
-        
-        // Try index.js in directory
-        if (fs.existsSync(path.join(fullPath, 'index.js'))) {
-            return path.join(fullPath, 'index.js');
+        try {
+            await fs.access(fullPath);
+            return fullPath;
+        } catch {
+            // Try with .js extension
+            try {
+                await fs.access(`${fullPath}.js`);
+                return `${fullPath}.js`;
+            } catch {
+                // Try index.js in directory
+                try {
+                    await fs.access(path.join(fullPath, 'index.js'));
+                    return path.join(fullPath, 'index.js');
+                } catch {
+                    throw new Error(`Cannot resolve import: ${importPath}`);
+                }
+            }
         }
-        
-        throw new Error(`Cannot resolve import: ${importPath}`);
     }
     
-    // Handle node_modules (simplified)
+    // Handle node_modules
     return importPath;
 }
 
